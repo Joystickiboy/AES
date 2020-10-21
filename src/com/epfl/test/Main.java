@@ -11,6 +11,16 @@ public class Main {
 	    byte[] initKey = StringToByte(initKeyS);
 
 
+	    byte[][] key = new byte[4][4];
+
+		//Put key in to 4x4 matrix
+	    for(int i=0; i<4; i++){
+	    	for(int k=0;k<4;k++) {
+				key[i][k] = initKey[(i * 4) + k];
+			}
+		}
+
+
 		byte[] m = StringToByte(s);
 		// Divide m into multiple 16 bytes (128 bits) blocks
 		//Find how many blocks there will be
@@ -28,21 +38,77 @@ public class Main {
 				blocks[i][j] = padded[(i*16)+j];
 			}
 		}
-		System.out.println("h");
-		//Add round key
 
-		byte[][] postRoundKey = new byte[mult][16];
+		byte[][] state = new byte[4][4];
 
-		for(int i=0; i<mult; i++){
-			for(int j=0; j<16; j++){
-				postRoundKey[i][j] = (byte) (initKey[j] ^ blocks[i][j]);
+		for(int i=0;i<mult;i++){
+			for (int j=0;j<4;j++) {
+				for(int k=0;k<4;k++){
+					state[j][k] = blocks[i][(j*4)+k];
+				}
+			}
+			//INIT ROUND
+			key = genKey(key);
+			state = addKey(key, state);
+			//MAIN ROUND
+			for (int r=0;r<10;r++){
+				for (int j=0;j<4;j++) {
+					for(int k=0;k<4;k++){
+						//DO SBOX SUBSTITIUTION
+					}
+				}
+
+
 			}
 		}
 
-		System.out.println(postRoundKey);
-
-
     }
+
+	private static byte[][] addKey(byte[][] key, byte[][] state) {
+    	for (int i=0;i<4;i++){
+    		for(int j=0;j<4;j++){
+    			state[i][j] = (byte) (state[i][j] ^ key[i][j]);
+			}
+		}
+    	return state;
+	}
+
+	private static byte[][] genKey(byte[][] initKey){
+		SBox sbox = new SBox();
+
+		//ROT WORD
+    	byte temp = initKey[0][3];
+    	initKey[0][3] = initKey[1][3];
+    	initKey[1][3] = initKey[2][3];
+    	initKey[2][3] = initKey[3][3];
+    	initKey[3][3] = temp;
+
+    	//SUB BYTE
+		int a1 = initKey[0][0];
+
+		int b10 = (a1 & 0xF0) >> 4;
+		int b01 = (a1 & 0x0F);
+		initKey[0][0] = (byte) sbox.apply(b10,b01);
+
+		a1 = initKey[1][0];
+		b10 = (a1 & 0xF0) >> 4;
+		b01 = (a1 & 0x0F);
+		initKey[1][0] = (byte) sbox.apply(b10,b01);
+
+		a1 = initKey[2][0];
+		b10 = (a1 & 0xF0) >> 4;
+		b01 = (a1 & 0x0F);
+		initKey[2][0] = (byte) sbox.apply(b10,b01);
+
+		a1 = initKey[1][0];
+		b10 = (a1 & 0xF0) >> 4;
+		b01 = (a1 & 0x0F);
+		initKey[3][0] = (byte) sbox.apply(b10,b01);
+
+		//RCON TIME
+
+		return initKey;
+	}
 
 
 	/**
@@ -62,5 +128,7 @@ public class Main {
 		}
 		return mult;
 	}
+
+
 
 }
